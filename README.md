@@ -39,7 +39,10 @@ curl '127.0.0.1:8080/api/peak'
 
 ### Task 2
 
-<TBC>
+- We interpret 'most deals are available' to mean the maximum availability of deals, extending from the Task 1 interpretation that active means that the deal is live, not that it has a positive qtyLeft value
+- We define the peak window to be a 60 minute period of time, which contains a time that the maximum number of concurrent deals are avilable
+- To tie break, we take the earliest 60 window which has the peak period most close to its beginning
+  i.e if a period of peak concurrent deals begins at 12:00 the 60 minute overlapping windows beginning at 11:01 to 12:01 and 12:00 to 13:00 both include 12:00. We chose the window beginning 12:00 not 11:01
 
 ## Results
 
@@ -307,4 +310,11 @@ curl '127.0.0.1:8080/api/deals?timeOfDay=21:00'
         }
     ]
 }
+```
+
+### Task 2
+
+```shell
+curl '127.0.0.1/api/peak'
+{"peakTimeStart":"6:00pm","peakTimeEnd":"7:00pm"}
 ```
