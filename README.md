@@ -29,6 +29,7 @@ curl '127.0.0.1:8080/api/peak'
 - Only 'lightening' deals have time overrides. Non-lightening deals are assumed to be all day deals, where all day is the opening hours of the restaurant.
 - Active does not mean available to use i.e an active deal may have 0 quantity available if all deals have been redeemed. (This was seedn in real-world eatclub app use)
 - If a deal has both start/end and open/close times, the start/end times are used.
+- No restaurants are open over midnight, but real world data may have 24 hour or late-night restaurants so the code handles midnight crossings
 
 ### Task 1
 

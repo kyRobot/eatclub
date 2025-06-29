@@ -5,7 +5,12 @@ import java.time.LocalTime;
 public record TimeRange(LocalTime start, LocalTime end) {
 
     public boolean contains(LocalTime t) {
-        return (t.equals(start) || t.isAfter(start)) && t.isBefore(end);
+        if (start.isBefore(end)) {
+            return (t.equals(start) || t.isAfter(start)) && t.isBefore(end);
+        } else {
+            // crosses midnight
+            return (t.equals(start) || t.isAfter(start)) || t.isBefore(end);
+        }
     }
 
     /**
