@@ -27,7 +27,7 @@ class PeakServiceTest {
     void setUp() {
         eatClubClient = mock(EatClubClient.class);
         effectiveWindowResolver = mock(EffectiveWindowResolver.class);
-        peakService = new PeakService(eatClubClient, effectiveWindowResolver, 60);
+        peakService = new PeakService(eatClubClient, effectiveWindowResolver);
     }
 
     @Test
@@ -45,13 +45,13 @@ class PeakServiceTest {
         when(eatClubClient.getRestaurants()).thenReturn(List.of(r));
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(12, 0), LocalTime.of(13, 0));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(12, 0), LocalTime.of(15, 0));
         assertEquals(expectedPeak, peak);
     }
 
     @Test
     void findsPeakWindowForMultipleOverlappingDeals() {
-        // Two deals overlap from 13:00 to 14:00
+        // Two deals overlap from 13:00 to 15:00
         TimeRange hours = new TimeRange(LocalTime.of(10, 0), LocalTime.of(18, 0));
         Deal d1 = new Deal("d1", 20, true, false, 10, new TimeRange(LocalTime.of(12, 0), LocalTime.of(15, 0)));
         Deal d2 = new Deal("d2", 15, true, false, 5, new TimeRange(LocalTime.of(13, 0), LocalTime.of(16, 0)));
@@ -59,7 +59,7 @@ class PeakServiceTest {
         when(eatClubClient.getRestaurants()).thenReturn(List.of(r));
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(13, 0), LocalTime.of(14, 0));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(13, 0), LocalTime.of(15, 0));
         assertEquals(expectedPeak, peak);
     }
 
@@ -79,28 +79,29 @@ class PeakServiceTest {
 
     @Test
     void findsPeakWindowOverMidnight() {
-        // Deal active from 22:00 to 02:00 (overnight)
+        // Deal active from 22:00 to 02:00 (overnight). Hits closing segment for the day
         TimeRange hours = new TimeRange(LocalTime.of(20, 0), LocalTime.of(4, 0));
         Deal d1 = new Deal("d1", 20, true, false, 10, new TimeRange(LocalTime.of(22, 0), LocalTime.of(2, 0)));
         Restaurant r = new Restaurant("r1", "Test Restaurant", "123 Test St", "Testville", hours, List.of(d1));
         when(eatClubClient.getRestaurants()).thenReturn(List.of(r));
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(22, 0), LocalTime.of(23, 0));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(22, 0), LocalTime.of(00, 0));
         assertEquals(expectedPeak, peak);
     }
 
     @Test
     void findsPeakWindowWrapsOverMidnight() {
-        // Deal active from 23:30 to 01:30 (overnight, not on the hour)
+        // Deal active from 23:30 to 01:30 (overnight, not on the hour). Hits closing
+        // segment
         TimeRange hours = new TimeRange(LocalTime.of(20, 0), LocalTime.of(4, 0));
         Deal d1 = new Deal("d1", 20, true, false, 10, new TimeRange(LocalTime.of(23, 30), LocalTime.of(1, 30)));
         Restaurant r = new Restaurant("r1", "Test Restaurant", "123 Test St", "Testville", hours, List.of(d1));
         when(eatClubClient.getRestaurants()).thenReturn(List.of(r));
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
-        peakService = new PeakService(eatClubClient, effectiveWindowResolver, 60); // 1 hour window
+        peakService = new PeakService(eatClubClient, effectiveWindowResolver);
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(23, 30), LocalTime.of(0, 30));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(23, 30), LocalTime.of(0, 00));
         assertEquals(expectedPeak, peak);
     }
 
@@ -115,8 +116,35 @@ class PeakServiceTest {
         when(eatClubClient.getRestaurants()).thenReturn(List.of(r1, r2));
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(13, 0), LocalTime.of(14, 0));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(13, 0), LocalTime.of(15, 0));
         assertEquals(expectedPeak, peak);
     }
 
+    @Test
+    void findsEarliestPeakWindowWhenMultiplePeakPeriods() {
+        // Two separate peak plateaus with identical concurrency -> earliest should win
+        TimeRange hours = new TimeRange(LocalTime.of(9, 0), LocalTime.of(18, 0));
+
+        // concurrency of 2 at 10:15 to 10:45
+        Deal p1d1 = new Deal("p1d1", 20, true, false, 5,
+                new TimeRange(LocalTime.of(10, 0), LocalTime.of(11, 0)));
+        Deal p1d2 = new Deal("p1d2", 15, true, false, 5,
+                new TimeRange(LocalTime.of(10, 15), LocalTime.of(10, 45)));
+
+        // concurrecnt of 2 at 15:10 to 15:50
+        Deal p2d1 = new Deal("p2d1", 25, true, false, 5,
+                new TimeRange(LocalTime.of(15, 0), LocalTime.of(16, 0)));
+        Deal p2d2 = new Deal("p2d2", 10, true, false, 5,
+                new TimeRange(LocalTime.of(15, 10), LocalTime.of(15, 50)));
+
+        Restaurant r = new Restaurant("r1", "Test", "1 St", "Ville",
+                hours, List.of(p1d1, p1d2, p2d1, p2d2));
+
+        when(eatClubClient.getRestaurants()).thenReturn(List.of(r));
+        when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
+
+        TimeRange peak = peakService.findPeakWindow();
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(10, 15), LocalTime.of(10, 45));
+        assertEquals(expectedPeak, peak);
+    }
 }
