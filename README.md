@@ -318,3 +318,62 @@ curl '127.0.0.1:8080/api/deals?timeOfDay=21:00'
 curl '127.0.0.1/api/peak'
 {"peakTimeStart":"6:00pm","peakTimeEnd":"9:00pm"}
 ```
+
+## Stretch Goal 1
+
+### Schema Design
+
+The below should render as a mermaid ER diagram of a SQL DB schema holding the demo data format.
+
+Not visible are indexes to meet interesting access patterns such as Deals by opening time, Deals by restaurant and other hypothetically interesting queries for example Restaurant search by Cuisine or Suburb.
+
+**Why a relational model?**
+
+The dataset has clear, well-defined relationships (one:many restaurant to deal, many:many restaurant to cuisine) and it needs transactional correctness (e.g. decrementing `qty_left` atomically when a deal is claimed).
+
+SQL gives us:
+
+- Strong referential integrity via foreign keys instead of relying on application-side checks
+- Ad-hoc analytical queries – handy for questions like “average discount by cuisine after 5 pm”, which are harder with e.g DynamoDB
+- ACID transactions to keep restaurant, deal and inventory rows in sync
+- Easier time handling (especially with Postgres), again harder without careful PK/SK planning in Dynamo
+- Indexes without heavy data duplication as seen in a schemaless store
+- Offload heavy querying to the RDS layer instead of app-level fan-out queries or table scans or app level joins
+- Native JSONB columns (Postgres) if we later want semi-structured but still SQL-queryable data
+
+Engine of choice: (Amazon Aurora) PostgreSQL
+
+```mermaid
+erDiagram
+    RESTAURANT {
+        UUID id PK
+        TEXT name
+        TEXT address_line1
+        TEXT suburb
+        TEXT image_url
+        TIME open_time
+        TIME close_time
+    }
+    CUISINE {
+        INT  id PK
+        TEXT name
+    }
+    DEAL {
+        UUID id PK
+        UUID restaurant_id FK
+        NUMERIC discount_pct
+        BOOLEAN dine_in
+        BOOLEAN lightning
+        TIME open_time
+        TIME close_time
+        INT  qty_left
+    }
+    RESTAURANT_CUISINE {
+        UUID restaurant_id FK
+        INT  cuisine_id FK
+    }
+
+    RESTAURANT ||--o{ DEAL                : offers
+    RESTAURANT ||--o{ RESTAURANT_CUISINE  : "tags with"
+    CUISINE    ||--o{ RESTAURANT_CUISINE  : "appears in"
+```
