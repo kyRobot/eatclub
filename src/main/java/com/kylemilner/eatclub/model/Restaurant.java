@@ -5,8 +5,8 @@ import java.util.List;
 public record Restaurant(
         String id,
         String name,
-        String address1,
+        String addressLine1,
         String suburb,
-        TimeRange openWindow,
+        TimeRange operatingHours,
         List<Deal> deals) {
 }
