@@ -1,18 +1,11 @@
 package com.kylemilner.eatclub.controller;
 
-import java.time.LocalTime;
-import java.util.List;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.kylemilner.eatclub.model.RestaurantDeal;
 import com.kylemilner.eatclub.model.TimeRange;
-import com.kylemilner.eatclub.model.api.DealsResponse;
 import com.kylemilner.eatclub.model.api.PeakResponse;
-import com.kylemilner.eatclub.service.DealService;
 import com.kylemilner.eatclub.service.PeakService;
 import com.kylemilner.eatclub.util.TimeUtil;
 

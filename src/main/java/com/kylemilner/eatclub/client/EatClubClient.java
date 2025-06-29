@@ -2,7 +2,6 @@ package com.kylemilner.eatclub.client;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
@@ -32,7 +31,8 @@ public class EatClubClient {
                 .toList();
     }
 
-    RestaurantDtoWrapper fetchRestaurants() {
+    // Protected for testing purposes
+    protected RestaurantDtoWrapper fetchRestaurants() {
         return restClient.get().uri(RESTAURANTS_ENDPOINT)
                 .retrieve()
                 .onStatus(err -> err.is4xxClientError() || err.is5xxServerError(),
