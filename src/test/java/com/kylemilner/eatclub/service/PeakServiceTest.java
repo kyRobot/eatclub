@@ -79,14 +79,15 @@ class PeakServiceTest {
 
     @Test
     void findsPeakWindowOverMidnight() {
-        // Deal active from 22:00 to 02:00 (overnight). Hits closing segment for the day
+        // Deal active from 22:00 to 02:00 (overnight). Hits opening segment for the day
+        // 00-02
         TimeRange hours = new TimeRange(LocalTime.of(20, 0), LocalTime.of(4, 0));
         Deal d1 = new Deal("d1", 20, true, false, 10, new TimeRange(LocalTime.of(22, 0), LocalTime.of(2, 0)));
         Restaurant r = new Restaurant("r1", "Test Restaurant", "123 Test St", "Testville", hours, List.of(d1));
         when(eatClubClient.getRestaurants()).thenReturn(List.of(r));
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(22, 0), LocalTime.of(00, 0));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(0, 0), LocalTime.of(2, 0)); // early morning overlap
         assertEquals(expectedPeak, peak);
     }
 
@@ -101,7 +102,7 @@ class PeakServiceTest {
         when(effectiveWindowResolver.calculateDealEffectiveTime(any(), any())).thenCallRealMethod();
         peakService = new PeakService(eatClubClient, effectiveWindowResolver);
         TimeRange peak = peakService.findPeakWindow();
-        TimeRange expectedPeak = new TimeRange(LocalTime.of(23, 30), LocalTime.of(0, 00));
+        TimeRange expectedPeak = new TimeRange(LocalTime.of(0, 0), LocalTime.of(1, 30));
         assertEquals(expectedPeak, peak);
     }
 

@@ -14,9 +14,11 @@ import com.kylemilner.eatclub.service.DealService;
 import com.kylemilner.eatclub.util.TimeUtil;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class DealsController {
 
     private final DealService dealService;
@@ -29,8 +31,10 @@ public class DealsController {
     public ResponseEntity<DealsResponse> getActiveDeals(@RequestParam("timeOfDay") String wantedTime) {
         LocalTime timeOfDay = TimeUtil.parseQueryParam(wantedTime);
         if (timeOfDay == null) {
+            log.warn("Rejected bad /deals request. Unacceptable time parameter");
             return ResponseEntity.badRequest().build();
         }
+        log.info("Accepted /deals?timeOfDay={} request", wantedTime);
         var activeRestaurantDeals = dealService.getActiveDealsAtTime(timeOfDay);
         var dealsResponse = mapToApiResponse(activeRestaurantDeals);
         return ResponseEntity.ok(dealsResponse);

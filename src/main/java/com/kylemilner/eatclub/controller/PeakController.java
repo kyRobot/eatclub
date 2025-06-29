@@ -10,9 +10,11 @@ import com.kylemilner.eatclub.service.PeakService;
 import com.kylemilner.eatclub.util.TimeUtil;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequiredArgsConstructor
+@Slf4j
 public class PeakController {
 
     private final PeakService peakService;
@@ -23,6 +25,7 @@ public class PeakController {
      */
     @GetMapping("/peak")
     public ResponseEntity<PeakResponse> getPeakWindow() {
+        log.info("Accepted /peak request");
         var peakRange = peakService.findPeakWindow();
         if (peakRange == null) {
             return ResponseEntity.notFound().build();

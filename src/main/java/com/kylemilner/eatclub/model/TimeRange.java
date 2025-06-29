@@ -28,27 +28,39 @@ public record TimeRange(LocalTime start, LocalTime end) {
     }
 
     /**
-     * Returns the overlap of two TimeRanges, handling cases where
-     * one or both ranges wrap past midnight (e.g. 22:00‑02:00).
-     * If no overlap exists, returns {@code null}.
+     * Returns the portion of {@code a} that lies inside {@code b}.
+     * <p>
+     * If {@code a} starts before {@code b} it is clamped to
+     * {@code b.start}. Likewise, if {@code a} ends after {@code b}
+     * it is clamped to {@code b.end}. The result therefore never
+     * extends outside {@code b}. If the two ranges do not overlap
+     * at all this method returns {@code null}.
      */
     public static TimeRange intersection(TimeRange a, TimeRange b) {
-        // Convert each range into 1 or 2 non‑wrapping segment
+        // Fast‑fail when there is no overlap at all
+        if (!overlaps(a, b)) {
+            return null;
+        }
+
+        // Clamp A’s bounds to B
+        LocalTime start = b.contains(a.start) ? a.start : b.start;
+        LocalTime end = b.contains(a.end) ? a.end : b.end;
+
+        return new TimeRange(start, end);
+    }
+
+    private static boolean overlaps(TimeRange a, TimeRange b) {
         TimeRangeSegment[] segmentsA = toSegments(a);
         TimeRangeSegment[] segmentsB = toSegments(b);
 
         for (TimeRangeSegment sa : segmentsA) {
             for (TimeRangeSegment sb : segmentsB) {
-                int s = Math.max(sa.start, sb.start);
-                int e = Math.min(sa.end, sb.end);
-                if (e > s) {
-                    LocalTime start = LocalTime.MIN.plusMinutes(s);
-                    LocalTime end = LocalTime.MIN.plusMinutes(e % MINUTES_PER_DAY);
-                    return new TimeRange(start, end);
+                if (sa.end > sb.start && sb.end > sa.start) {
+                    return true;
                 }
             }
         }
-        return null; // no overlap
+        return false;
     }
 
     /**
