@@ -10,6 +10,7 @@ import com.kylemilner.eatclub.model.Deal;
 import com.kylemilner.eatclub.model.Restaurant;
 import com.kylemilner.eatclub.model.RestaurantDeal;
 import com.kylemilner.eatclub.model.RestaurantDeal.DealSummary;
+import com.kylemilner.eatclub.util.EffectiveWindowResolver;
 import com.kylemilner.eatclub.model.TimeRange;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 public class DealService {
 
     private final EatClubClient eatClubClient;
+    private final EffectiveWindowResolver windowResolver;
 
     public List<RestaurantDeal> getActiveDealsAtTime(LocalTime timeOfDay) {
         return eatClubClient.getRestaurants().stream()
@@ -33,30 +35,8 @@ public class DealService {
     }
 
     private boolean isDealActive(Deal deal, Restaurant restaurant, LocalTime timeOfDay) {
-        TimeRange effectiveTimeRange = calculateDealEffectiveTime(deal, restaurant.operatingHours());
+        TimeRange effectiveTimeRange = windowResolver.calculateDealEffectiveTime(deal, restaurant.operatingHours());
         return effectiveTimeRange.contains(timeOfDay);
-    }
-
-    private TimeRange calculateDealEffectiveTime(Deal deal, TimeRange restaurantOpenClose) {
-        // calculate effective deal time window. Use restaurant open/close hours if the
-        // deal has no override
-
-        TimeRange dealWindow = deal.availabilityRange() != null
-                ? deal.availabilityRange()
-                : restaurantOpenClose;
-
-        // if the deal window is now outside the restaurant's open hours, we clamp it to
-        // the restaurant's open hours
-        TimeRange boundToRestaurantOpenClose = TimeRange.intersection(dealWindow, restaurantOpenClose);
-        log.debug("Deal {} effective time window after bounding to restaurant hours: {}", deal.id(),
-                boundToRestaurantOpenClose);
-
-        if (boundToRestaurantOpenClose == null) {
-            log.warn("Deal {} has no meaningful time window. Using restaurant open hours", deal.id());
-            return restaurantOpenClose;
-        }
-
-        return boundToRestaurantOpenClose;
     }
 
     private RestaurantDeal toRestaurantDeal(Restaurant restaurant, Deal deal) {
