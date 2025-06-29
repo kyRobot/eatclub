@@ -6,5 +6,5 @@ public record Deal(
         boolean dineIn,
         boolean lightning,
         int quantityLeft,
-        TimeRange activeWindow) {
+        TimeRange availabilityRange) {
 }

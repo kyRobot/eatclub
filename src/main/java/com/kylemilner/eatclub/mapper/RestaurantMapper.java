@@ -35,24 +35,21 @@ public class RestaurantMapper {
     }
 
     private Deal toDeal(DealDto d, TimeRange restaurantOpenClose) {
-        TimeRange effectiveDealTimeRange = calculateDealEffectiveTime(d, restaurantOpenClose);
+        TimeRange dealTime = calculateDealOverrideTime(d, restaurantOpenClose);
 
         return new Deal(d.objectId(),
                 Integer.parseInt(d.discount()),
                 Boolean.parseBoolean(d.dineIn()),
                 Boolean.parseBoolean(d.lightning()),
                 Integer.parseInt(d.qtyLeft()),
-                effectiveDealTimeRange);
+                dealTime);
     }
 
     private TimeRange toTimeRange(String start, String end) {
         return new TimeRange(TimeUtil.parseAmPmTime(start), TimeUtil.parseAmPmTime(end));
     }
 
-    private TimeRange calculateDealEffectiveTime(DealDto d, TimeRange restaurantOpenClose) {
-        // calculate effective deal time window. Use restaurant open/close hours if the
-        // deal has no
-        // overrides
+    private TimeRange calculateDealOverrideTime(DealDto d, TimeRange restaurantOpenClose) {
         // dealDto can have both start and end or just open close, so we handle both
         // cases here.
         // arbitrarily we prefer start/end over open/close
@@ -61,22 +58,8 @@ public class RestaurantMapper {
 
         TimeRange dealWindow = startRaw != null && endRaw != null
                 ? toTimeRange(startRaw, endRaw)
-                : restaurantOpenClose; // fallback to restaurant time
-        log.debug("Deal {} has effective time window: {}", d.objectId(), dealWindow);
+                : null;
 
-        // finally, if the deal is outside the restaurant's open hours, we clamp it to
-        // the restaurant's open hours
-        TimeRange boundToRestaurantOpenClose = TimeRange.intersection(dealWindow, restaurantOpenClose);
-        log.debug("Deal {} effective time window after bounding to restaurant hours: {}", d.objectId(),
-                boundToRestaurantOpenClose);
-
-        if (boundToRestaurantOpenClose == null) {
-            log.warn(
-                    "Deal {} has no effective time window after bounding to restaurant hours, using restaurant open hours",
-                    d.objectId());
-            return restaurantOpenClose;
-        }
-
-        return boundToRestaurantOpenClose;
+        return dealWindow;
     }
 }
