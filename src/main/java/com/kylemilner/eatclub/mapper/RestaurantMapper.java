@@ -37,7 +37,8 @@ public class RestaurantMapper {
     private Deal toDeal(DealDto d, TimeRange restaurantOpenClose) {
         TimeRange effectiveDealTimeRange = calculateDealEffectiveTime(d, restaurantOpenClose);
 
-        return new Deal(d.objectId(), d.discount(),
+        return new Deal(d.objectId(),
+                Integer.parseInt(d.discount()),
                 Boolean.parseBoolean(d.dineIn()),
                 Boolean.parseBoolean(d.lightning()),
                 Integer.parseInt(d.qtyLeft()),

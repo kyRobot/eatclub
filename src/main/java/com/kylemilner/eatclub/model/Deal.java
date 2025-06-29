@@ -2,7 +2,7 @@ package com.kylemilner.eatclub.model;
 
 public record Deal(
         String id,
-        String discount,
+        int discount,
         boolean dineIn,
         boolean lightning,
         int quantityLeft,

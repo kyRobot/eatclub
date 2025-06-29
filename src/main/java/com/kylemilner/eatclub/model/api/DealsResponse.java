@@ -1,29 +1,22 @@
 package com.kylemilner.eatclub.model.api;
 
-import java.util.ArrayList;
 import java.util.List;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import lombok.Data;
+public record DealsResponse(List<DealResponseItem> deals) {
 
-@Data
-public class DealsResponse {
-    private List<DealResponseItem> deals = new ArrayList<>();
-
-    @Data
-    public static class DealResponseItem {
-        private String restaurantObjectId;
-        private String restaurantName;
-        private String restaurantAddress1;
-        @JsonProperty("restarantSuburb") // Note: keeping the typo from challenge spec
-        private String restaurantSuburb;
-        private String restaurantOpen;
-        private String restaurantClose;
-        private String dealObjectId;
-        private String discount;
-        private String dineIn;
-        private String lightning;
-        private String qtyLeft;
+    public record DealResponseItem(
+            String restaurantObjectId,
+            String restaurantName,
+            String restaurantAddress1,
+            @JsonProperty("restarantSuburb") // Note: keeping the typo from challenge spec
+            String restaurantSuburb,
+            String restaurantOpen,
+            String restaurantClose,
+            String dealObjectId,
+            String discount,
+            String dineIn,
+            String lightning,
+            String qtyLeft) {
     }
 }

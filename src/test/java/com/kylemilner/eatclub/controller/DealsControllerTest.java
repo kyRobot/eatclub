@@ -33,7 +33,7 @@ class DealsControllerTest {
         assertNotNull(response);
         assertTrue(response.getStatusCode().is2xxSuccessful());
         assertNotNull(response.getBody());
-        assertTrue(response.getBody().getDeals().isEmpty());
+        assertTrue(response.getBody().deals().isEmpty());
     }
 
     @Test

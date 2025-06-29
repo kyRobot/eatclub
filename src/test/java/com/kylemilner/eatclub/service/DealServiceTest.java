@@ -1,7 +1,7 @@
 package com.kylemilner.eatclub.service;
 
 import com.kylemilner.eatclub.client.EatClubClient;
-import com.kylemilner.eatclub.model.RestaurantDeals;
+import com.kylemilner.eatclub.model.RestaurantDeal;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
@@ -17,7 +17,7 @@ class DealServiceTest {
     @Test
     void getActiveDealsAtTime_returnsEmptyListByDefault() {
         Mockito.when(eatClubClient.getRestaurants()).thenReturn(List.of());
-        List<RestaurantDeals> deals = dealService.getActiveDealsAtTime(LocalTime.of(12, 0));
+        List<RestaurantDeal> deals = dealService.getActiveDealsAtTime(LocalTime.of(12, 0));
         assertNotNull(deals);
         assertTrue(deals.isEmpty());
     }
